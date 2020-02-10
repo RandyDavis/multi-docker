@@ -1,0 +1,23 @@
+language: generic
+sudo: required
+services:
+    - docker
+
+before_install:
+    - docker build -t randydavis/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+    - docker run -e CI=true randydavis/react-test npm run test
+
+after_success:
+    - docker build -t randydavis/multi-client ./client
+    - docker build -t randydavis/multi-nginx ./nginx
+    - docker build -t randydavis/multi-server ./server
+    - docker build -t randydavis/multi-worker ./worker
+    # LOG IN TO DOCKER CLI
+    - echo  "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+    # TAKE IMAGES AND PUSH THEM TO DOCKER HUB
+    - docker push randydavis/multi-client
+    - docker push randydavis/multi-nginx
+    - docker push randydavis/multi-server
+    - docker push randydavis/multi-worker
